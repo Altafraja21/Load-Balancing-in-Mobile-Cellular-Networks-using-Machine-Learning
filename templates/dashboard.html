@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📶 AI Load Balancer Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="/static/theme.js" defer></script>
+  <style>
+    #liveIndicator { width:12px; height:12px; border-radius:50%; background:#28a745; margin-left:8px; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%{transform:scale(.9);opacity:.7}50%{transform:scale(1.3);opacity:1}100%{transform:scale(.9);opacity:.7} }
+    #liveText{font-size:.9rem;color:#e6fbe2} html.dark-mode #liveText{color:#9df7a3}
+  </style>
+</head>
+<body>
+ <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <a class="navbar-brand fw-bold" href="/">📡 AI Load Balancer</a>
+
+    <!-- 🟢 Live Status + Source Badge -->
+    <div class="d-flex align-items-center">
+      <div class="me-3 d-flex align-items-center">
+        <span id="liveText">Live</span>
+        <div id="liveIndicator" style="width:12px;height:12px;border-radius:50%;background:#28a745;margin-left:6px;animation:pulse 1.5s infinite;"></div>
+      </div>
+      <span id="dataSourceBadge" class="badge bg-success me-3">
+        {{ source if source else 'Synthetic' }}
+      </span>
+      <div class="form-check form-switch text-light">
+        <input class="form-check-input" type="checkbox" id="themeToggle">
+        <label class="form-check-label" for="themeToggle">🌙</label>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="container py-4">
+    <h2 class="text-center text-primary mb-4 fw-bold">📊 Real-Time AI Network Load Balancing Dashboard</h2>
+
+    <!-- Location chooser -->
+    <div class="card mb-3 shadow-sm p-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <input id="placeInput" class="form-control" placeholder="Enter city or place name (e.g., Lucknow)"/>
+        </div>
+        <div class="col-md-3">
+          <input id="latInput" class="form-control" placeholder="Latitude (optional)"/>
+        </div>
+        <div class="col-md-3">
+          <input id="lonInput" class="form-control" placeholder="Longitude (optional)"/>
+        </div>
+        <div class="col-md-2 d-grid">
+          <button id="fetchTowersBtn" class="btn btn-primary">Fetch Towers</button>
+        </div>
+      </div>
+      <div class="small text-muted mt-2">Tip: enter a city name OR latitude+longitude. If both, coordinates are used.</div>
+    </div>
+
+    <!-- Controls -->
+    <form id="controlForm" method="POST" class="text-center mb-4">
+      <div class="row justify-content-center">
+        <div class="col-md-3 mb-2">
+          <select name="method" class="form-select shadow-sm" id="methodSelect">
+            <option value="baseline" selected>Baseline</option>
+            <option value="heuristic">Heuristic</option>
+            <option value="kmeans">K-Means</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <div class="form-check form-switch d-flex justify-content-center align-items-center">
+            <input class="form-check-input me-2" type="checkbox" name="live" id="liveCheck">
+            <label class="form-check-label" for="liveCheck">Live Simulation</label>
+          </div>
+        </div>
+        <div class="col-md-6 mb-2">
+          <button id="runBtn" class="btn btn-primary shadow-sm me-2">▶️ Run</button>
+          <button id="demoButton" type="button" class="btn btn-warning shadow-sm me-2">🎬 Demo Mode</button>
+          <a href="/compare" class="btn btn-outline-secondary shadow-sm me-2">📈 Compare</a>
+          <a href="/analytics" class="btn btn-success shadow-sm me-2">📊 Analytics</a>
+          <a href="/download_pdf" class="btn btn-outline-dark shadow-sm">📄 Download PDF</a>
+        </div>
+      </div>
+    </form>
+
+    <!-- Metrics container (will be replaced by fetch results) -->
+    <div id="metricsCard" class="card shadow-lg border-0 mb-4 p-3">
+      <h5 class="text-secondary fw-bold mb-3">Performance Metrics</h5>
+      <div class="row text-center">
+        <div class="col-md-3"><b>Algorithm:</b> <span id="m_algo">Baseline</span></div>
+        <div class="col-md-2"><b>Overloaded BS:</b> <span id="m_over">0</span></div>
+        <div class="col-md-2"><b>Jain Index:</b> <span id="m_jain">0</span></div>
+        <div class="col-md-2"><b>Throughput:</b> <span id="m_thr">0</span></div>
+        <div class="col-md-2"><b>Utilization:</b> <span id="m_util">0</span></div>
+      </div>
+    </div>
+    <!-- 💡 Technical Guide / How It Works -->
+<div class="accordion mb-4" id="techGuide">
+  <div class="accordion-item border-0 shadow-sm">
+    <h2 class="accordion-header">
+      <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapseTech" aria-expanded="true">
+        🧠 Technical Guide – How It Works
+      </button>
+    </h2>
+    <div id="collapseTech" class="accordion-collapse collapse show">
+      <div class="accordion-body">
+        <p>
+          This project demonstrates how <b>AI</b> and <b>Machine Learning</b> can make 
+          <b>mobile networks smarter</b> by automatically redistributing users between 
+          cell towers for optimal performance.
+        </p>
+
+        <ul>
+          <li>📶 <b>Baseline (Nearest BS):</b>  
+              Users connect to the closest Base Station (BS) only.</li>
+          <li>⚙️ <b>Heuristic Rebalance:</b>  
+              Uses simple load-sharing logic — moves some users from overloaded towers 
+              to nearby free ones.</li>
+          <li>🧠 <b>K-Means ML Reassignment:</b>  
+              Uses clustering (K-Means) to find the most balanced user distribution 
+              across towers.</li>
+        </ul>
+
+        <p class="mt-3">
+          The dashboard shows live metrics like <b>Jain Index</b> (fairness), 
+          <b>Throughput</b> (total users served), and <b>Utilization</b> (efficiency of towers).
+        </p>
+
+        <div class="alert alert-info small mt-3 mb-0">
+          <b>📘 Tip:</b> You can run each algorithm from the dropdown above and compare 
+          how AI-driven balancing improves overall network performance in the 
+          <a href="/compare" class="text-decoration-none fw-bold">Compare</a> and 
+          <a href="/analytics" class="text-decoration-none fw-bold">Analytics</a> sections.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 🎥 Quick Demo Mode Guide -->
+<div class="accordion mb-4" id="demoGuide">
+  <div class="accordion-item border-0 shadow-sm">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed fw-semibold" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapseDemo" aria-expanded="false">
+        🎥 Quick Demo Mode – Live Simulation Explained
+      </button>
+    </h2>
+    <div id="collapseDemo" class="accordion-collapse collapse">
+      <div class="accordion-body">
+        <p>
+          The <b>Demo Mode</b> is designed to simulate <b>real-world mobile traffic</b> in a short time.  
+          When activated, it automatically cycles through all algorithms — 
+          showing how network load changes as AI redistributes users between towers.
+        </p>
+
+        <ul>
+          <li>▶️ <b>Start Demo:</b> Click the yellow <b>🎬 Demo Mode</b> button.</li>
+          <li>🔁 The dashboard will auto-run <b>Baseline → Heuristic → K-Means</b> sequentially.</li>
+          <li>📡 Charts and metrics update live — reflecting each algorithm’s decisions.</li>
+          <li>📈 The <b>Live Prediction Feed</b> (bottom of the page) keeps showing real-time forecasts of throughput.</li>
+        </ul>
+
+        <p>
+          This is perfect for <b>presentations</b> — you can demonstrate how AI agents
+          learn and balance tower loads without manual intervention.
+        </p>
+
+        <div class="alert alert-success small mt-3 mb-0">
+          <b>💡 Pro Tip:</b> During Demo Mode, watch how <b>Heuristic</b> and <b>K-Means</b> 
+          gradually improve the <b>Jain Index</b> and <b>Throughput</b> compared to the baseline.  
+          It’s AI model working in action!
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <!-- Validation + Integrity -->
+    <div id="validationWrapper"></div>
+    <div id="integrityWrapper"></div>
+
+    <!-- Map & bar -->
+    <div id="mapBarRow" class="row mt-4">
+      <div id="mapCard" class="col-md-6 mb-4"><div class="card shadow-sm border-0 p-2">{{ map_html|safe }}</div></div>
+      <div id="barCard" class="col-md-6 mb-4"><div class="card shadow-sm border-0 p-2">{{ bar_html|safe }}</div></div>
+      <div id="predCard" class="col-md-12 mb-4">{% if pred_html %}<div class="card shadow-sm border-0 p-2">{{ pred_html|safe }}</div>{% endif %}</div>
+    </div>
+
+    <!-- Live prediction feed + chart -->
+    <div id="livePanel" class="card shadow-lg border-0 p-3 mt-4">
+      <h5 class="text-success mb-2 fw-bold">📡 Live Prediction Feed</h5>
+      <ul id="predictionFeed" class="list-group small" style="max-height:150px; overflow-y:auto;"></ul>
+      <div id="liveChart" class="mt-3" style="height:300px;"></div>
+    </div>
+
+    <div class="alert alert-info mt-3 shadow-sm small">
+      <b>📘 Quick Guide:</b> Jain Index → Fairness (0–1). Throughput → Total users served. Utilization → Tower usage.
+    </div>
+  </div>
+
+  <!-- Demo panel -->
+  <div id="demoPanel" class="position-fixed bottom-0 end-0 m-3 p-3 rounded-4 shadow-lg" style="display:none; z-index:1050; background:#ffc107; width:260px;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <strong>🎬 Demo Mode</strong>
+      <button id="stopDemoBtn" class="btn btn-sm btn-outline-dark py-0 px-2">✖</button>
+    </div>
+    <div class="small" id="demoStatus">Starting simulation...</div>
+    <div class="progress mt-2" style="height:6px;">
+      <div id="demoProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;"></div>
+    </div>
+  </div>
+
+  <!-- JS libs -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/demo.js" defer></script>
+  <script>
+  // Initialize empty live chart
+  const chartDiv = document.getElementById("liveChart");
+  Plotly.newPlot(chartDiv, [{ y: [], type: 'scatter', mode: 'lines+markers', name: 'Throughput' }], { title: 'Real-Time Throughput Forecast', yaxis:{title:'Users'} });
+
+  // fetch towers button handler
+  document.getElementById("fetchTowersBtn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    const q = document.getElementById("placeInput").value.trim();
+    const lat = document.getElementById("latInput").value.trim();
+    const lon = document.getElementById("lonInput").value.trim();
+    let payload = {};
+    if (lat && lon) {
+      payload.lat = parseFloat(lat); payload.lon = parseFloat(lon);
+    } else if (q) {
+      payload.q = q;
+    } else {
+      alert("Enter a place name or latitude+longitude.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/fetch_towers", {
+        method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.error) { alert("Error: " + json.error); return; }
+
+      // replace map/bar/prediction HTML
+      document.getElementById("mapCard").innerHTML = '<div class="card shadow-sm border-0 p-2">'+json.map_html+'</div>';
+      document.getElementById("barCard").innerHTML = '<div class="card shadow-sm border-0 p-2">'+json.bar_html+'</div>';
+      document.getElementById("predCard").innerHTML = json.pred_html ? '<div class="card shadow-sm border-0 p-2">'+json.pred_html+'</div>' : '';
+
+      // update metrics
+      document.getElementById("m_algo").innerText = json.metrics.Algorithm;
+      document.getElementById("m_over").innerText = json.metrics.Overloaded_BS;
+      document.getElementById("m_jain").innerText = json.metrics.Jain_Index;
+      document.getElementById("m_thr").innerText = json.metrics.Throughput;
+      document.getElementById("m_util").innerText = json.metrics.Avg_Utilization;
+
+      // update validation messages and integrity
+      const vWrap = document.getElementById("validationWrapper");
+      if (json.validation_messages && json.validation_messages.length) {
+        let html = '<div id="validationAlert" class="alert shadow-sm mt-3"><ul class="mb-0">';
+        json.validation_messages.forEach(m => html += `<li>${m}</li>`);
+        html += '</ul></div>';
+        vWrap.innerHTML = html;
+      } else { vWrap.innerHTML = ''; }
+
+      const iWrap = document.getElementById("integrityWrapper");
+      iWrap.innerHTML = `<div class="alert mt-2 text-center fw-bold" id="integrityBox">Data Integrity Score: ${json.integrity_score}%</div>`;
+
+      // refresh live prediction chart/series immediately
+      updatePredictions(); // will use live endpoint to get series
+
+    } catch (err) {
+      console.error("Fetch towers failed", err);
+      alert("Failed to fetch towers. See console.");
+    }
+  });
+
+  // live predictions & feed
+  async function updatePredictions() {
+    try {
+      const res = await fetch("/live_predictions");
+      const data = await res.json();
+      if (data.error) return;
+      const feed = document.getElementById("predictionFeed");
+      const item = document.createElement("li");
+      item.className = "list-group-item";
+      item.textContent = `🕒 ${data.timestamp} → Forecasted Throughput: ${data.throughput} users`;
+      feed.insertBefore(item, feed.firstChild);
+      while (feed.children.length > 5) feed.removeChild(feed.lastChild);
+
+      // update plotly chart with the full series
+      Plotly.react(chartDiv, [{ y: data.series, type:'scatter', mode:'lines+markers', name:'Throughput' }], { title:'Real-Time Throughput Forecast', yaxis:{title:'Users'} });
+      // set live indicator green
+      document.getElementById("liveIndicator").style.backgroundColor = "#28a745";
+      document.getElementById("liveText").innerText = "Live";
+    } catch (err) {
+      console.warn("Live update failed:", err);
+      document.getElementById("liveIndicator").style.backgroundColor = "#dc3545";
+      document.getElementById("liveText").innerText = "Offline";
+    }
+  }
+  setInterval(updatePredictions, 10000);
+  updatePredictions();
+
+  // small: Run button will submit form to server (to run simulation); intercept to use AJAX optionally later
+  document.getElementById("runBtn").addEventListener("click", (e) => {
+    // default: allow form submit (normal behavior). If you prefer AJAX run, we can change this.
+  });
+
+  // validation color logic applied when validation area exists
+  setInterval(() => {
+    const valBox = document.getElementById("validationAlert");
+    const integrity = document.getElementById("integrityBox");
+    if (valBox) {
+      const text = valBox.innerText;
+      if (text.includes("❌")) valBox.classList.add("alert-danger");
+      else if (text.includes("⚠️")) valBox.classList.add("alert-warning");
+      else valBox.classList.add("alert-success");
+    }
+    if (integrity) {
+      const scoreMatch = integrity.innerText.match(/(\d+(\.\d+)?)/);
+      if (scoreMatch) {
+        const score = parseFloat(scoreMatch[1]);
+        if (score >= 90) integrity.classList.add("alert-success");
+        else if (score >= 70) integrity.classList.add("alert-warning");
+        else integrity.classList.add("alert-danger");
+      }
+    }
+  }, 1200);
+
+  // 🎯 Auto-color the Data Source badge
+document.addEventListener("DOMContentLoaded", function () {
+  const badge = document.getElementById("dataSourceBadge");
+  if (!badge) return;
+  const text = badge.innerText.trim().toLowerCase();
+  if (text.includes("open")) {
+    badge.classList.remove("bg-warning","bg-secondary");
+    badge.classList.add("bg-success");
+  } else if (text.includes("mozilla")) {
+    badge.classList.remove("bg-success","bg-secondary");
+    badge.classList.add("bg-warning");
+  } else {
+    badge.classList.remove("bg-success","bg-warning");
+    badge.classList.add("bg-secondary");
+  }
+});
+
+  </script>
+
+  
+</body>
+</html>
