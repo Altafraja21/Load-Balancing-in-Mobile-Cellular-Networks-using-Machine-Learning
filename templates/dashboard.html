@@ -90,10 +90,10 @@
       <h5 class="text-secondary fw-bold mb-3">Performance Metrics</h5>
       <div class="row text-center">
         <div class="col-md-3"><b>Algorithm:</b> <span id="m_algo">Baseline</span></div>
-        <div class="col-md-2"><b>Overloaded BS:</b> <span id="m_over">0</span></div>
-        <div class="col-md-2"><b>Jain Index:</b> <span id="m_jain">0</span></div>
-        <div class="col-md-2"><b>Throughput:</b> <span id="m_thr">0</span></div>
-        <div class="col-md-2"><b>Utilization:</b> <span id="m_util">0</span></div>
+        <div class="col-md-2"><b>Overloaded BS:</b> <span id="m_over">{{ metrics.Overloaded_BS }}</span></div>
+        <div class="col-md-2"><b>Jain Index:</b> <span id="m_jain">{{ metrics.Jain_Index }}</span></div>
+        <div class="col-md-2"><b>Throughput:</b> <span id="m_thr">{{ metrics.Throughput }}</span></div>
+        <div class="col-md-2"><b>Utilization:</b> <span id="m_util">{{ metrics.Avg_Utilization }}</span></div>
       </div>
     </div>
     <!-- 💡 Technical Guide / How It Works -->

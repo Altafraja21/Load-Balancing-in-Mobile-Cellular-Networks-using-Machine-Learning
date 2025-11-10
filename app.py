@@ -251,15 +251,42 @@ def analytics():
 # ─────────────── /LIVE & PDF ROUTES ───────────────
 @app.route("/live_predictions")
 def live_predictions():
+    # Forecast series (may be None if no logs yet)
     pred_df = forecast_future_loads()
+    # Read last recorded metrics from logs file (if available)
+    last_metrics = {"Jain_Index": 0.0, "Throughput": 0, "Avg_Utilization": 0.0, "Method": "N/A", "Overloaded_BS": 0}
+    try:
+        if os.path.exists("data/logs.csv") and os.stat("data/logs.csv").st_size > 0:
+            df = pd.read_csv("data/logs.csv")
+            if not df.empty:
+                last = df.iloc[-1]
+                last_metrics = {
+                    "Jain_Index": float(last.get("Jain_Index", 0.0)),
+                    "Throughput": int(last.get("Throughput", 0)),
+                    "Avg_Utilization": float(last.get("Avg_Utilization", 0.0)),
+                    "Method": last.get("Method", "N/A"),
+                    "Overloaded_BS": int(last.get("Overloaded_BS", 0)),
+                }
+    except Exception as e:
+        print("[WARN] Could not read logs for live metrics:", e)
+
+    # If no forecast available, return metrics only
     if pred_df is None:
-        return jsonify({"error": "No data"})
+        return jsonify({
+            "timestamp": datetime.now().strftime("%H:%M:%S"),
+            "throughput": last_metrics["Throughput"],
+            "series": [],
+            "metrics": last_metrics
+        })
+
     series = pred_df["Predicted_Throughput"].tolist()
     return jsonify({
         "timestamp": datetime.now().strftime("%H:%M:%S"),
         "throughput": round(float(series[-1]), 2),
-        "series": series
+        "series": series,
+        "metrics": last_metrics
     })
+
 
 
 @app.route("/download_pdf")

@@ -110,3 +110,9 @@ html.dark-mode #demoPanel .btn-outline-dark {
 html.dark-mode #demoPanel .progress {
   background-color: #333;
 }
+
+.metrics-box span.updated {
+  color: #28a745;
+  transform: scale(1.06);
+  transition: transform 0.25s ease, color 0.25s ease;
+}
